@@ -132,7 +132,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('nic-servicebus-name')).ipConfigurations[0].properties.privateIPAddress]"
+                        "ipv4Address": "[reference(variables('privateendpoint-servicebus')).ipConfigurations[0].properties.privateIPAddress]"
                     }
                 ]
             }
@@ -148,7 +148,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('nic-keyvault-name')).ipConfigurations[0].properties.privateIPAddress]"
+                        "ipv4Address": "[reference(variables('privateendpoint-keyvault')).ipConfigurations[0].properties.privateIPAddress]"
                     }
                 ]
             }
