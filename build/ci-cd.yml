@@ -23,7 +23,6 @@ stages:
         ArtifactName: 'drop'
         publishLocation: 'Container'
 
-stages:
 - stage: 'DEV'
   jobs:
   - job:
@@ -47,7 +46,6 @@ stages:
         csmParametersFile: '/infra/resource-parameters.dev.json'
         deploymentMode: 'Complete'
 
-stages:
 - stage: 'TEST'
   jobs:
   - job:
