@@ -23,7 +23,10 @@
         "subnet-services-name": "[concat(parameters('resourcenameprefix'), '-services-tier-subnet', parameters('resourcenamepostfix'))]",
         "app-name": "[concat(parameters('resourcenameprefix'), '-app', parameters('resourcenamepostfix'))]",
         "privateendpoint-servicebus": "[concat(parameters('resourcenameprefix'), '-privateendpoint-servicebus', parameters('resourcenamepostfix'))]",
-        "privateendpoint-keyvault": "[concat(parameters('resourcenameprefix'), '-privateendpoint-keyvault', parameters('resourcenamepostfix'))]"
+        "privateendpoint-keyvault": "[concat(parameters('resourcenameprefix'), '-privateendpoint-keyvault', parameters('resourcenamepostfix'))]",
+        "appinsights-name": "[concat(parameters('resourcenameprefix'), '-appinsights', parameters('resourcenamepostfix'))]",
+        "keyvault-dns-name": "keyvault",
+        "servicebus-dns-name": "servicebus"
     },
     "resources": [
         {
@@ -122,7 +125,7 @@
         {
             "type": "Microsoft.Network/privateDnsZones/A",
             "apiVersion": "2018-09-01",
-            "name": "[concat(variables('private-dns-zone-name'), '/servicebus')]",
+            "name": "[concat(variables('private-dns-zone-name'), '/', variables('servicebus-dns-name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
             ],
@@ -138,7 +141,7 @@
         {
             "type": "Microsoft.Network/privateDnsZones/A",
             "apiVersion": "2018-09-01",
-            "name": "[concat(variables('private-dns-zone-name'), '/keyvault')]",
+            "name": "[concat(variables('private-dns-zone-name'), '/', variables('keyvault-dns-name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
             ],
@@ -479,6 +482,81 @@
                     }
                 ]
             }
+        },
+        {
+            "name": "[variables('appinsights-name')]",
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2018-05-01-preview",
+            "location": "[resourceGroup().location]",
+            "kind": "web",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('app-name'))]"
+            ],
+            "properties": {
+                "applicationId": "[variables('app-name')]",
+                "application_Type": "web"
+            }
+        },
+        {
+            "name": "[concat(variables('app-name'), '/appsettings')]",
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2019-08-01",
+            "properties": {
+                "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appinsights-name')), '2018-05-01-preview').InstrumentationKey]",
+                "WEBSITE_VNET_ROUTE_ALL": "1",
+                "WEBSITE_DNS_SERVER": "168.63.129.16",
+                "KEYVAULT_URI": "[concat('https://', variables('keyvault-dns-name'), '.', variables('private-dns-zone-name'))]",
+                "SERVICEBUS_URI": "[concat('https://', variables('servicebus-dns-name'), '.', variables('private-dns-zone-name'))]"
+            }
+        },
+        {
+            "type": "Microsoft.KeyVault/vaults/accessPolicies",
+            "name": "[concat(variables('keyvault-name'), '/add')]",
+            "apiVersion": "2018-02-14",
+            "properties": {
+                "accessPolicies": [
+                    {
+                        "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('app-name')), '2019-08-01', 'Full').identity.principalId]",
+                        "tenantId": "[subscription().tenantId]",
+                        "permissions": {
+                            "keys": [
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List"
+                            ],
+                            "certificates": [
+                            ]
+                        },
+                        "applicationId": null
+                    }
+                ]
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[concat(variables('servicebus-name'), '/Microsoft.Authorization/', guid(uniqueString(concat(variables('servicebus-name'), 'receiver'))))]",
+            "dependsOn": [
+                "[variables('servicebus-name')]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId , '/providers/Microsoft.Authorization/roleDefinitions/4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('app-name')), '2019-08-01', 'Full').identity.principalId]"
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/providers/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[concat(variables('servicebus-name'), '/Microsoft.Authorization/', guid(uniqueString(concat(variables('servicebus-name'), 'sender'))))]",
+            "dependsOn": [
+                "[variables('servicebus-name')]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId , '/providers/Microsoft.Authorization/roleDefinitions/69a216fc-b8fb-44d8-bc22-1f3c2cd27a39')]",
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('app-name')), '2019-08-01', 'Full').identity.principalId]"
+            }
         }
+
     ]
 }
