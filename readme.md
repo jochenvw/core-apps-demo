@@ -1,0 +1,1 @@
+[![Build Status](https://dev.azure.com/jvwdemo/core-apps/_apis/build/status/jochenvw.core-apps-demo%20(1)?branchName=master)](https://dev.azure.com/jvwdemo/core-apps/_build/latest?definitionId=61&branchName=master)
