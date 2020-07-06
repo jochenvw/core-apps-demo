@@ -12,18 +12,16 @@
         }
     },
     "variables": {
-        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secrets', parameters('resourcenamepostfix'))]",
+        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secret', parameters('resourcenamepostfix'))]",
         "default-nsg-name": "[concat(parameters('resourcenameprefix'), '-nsg', parameters('resourcenamepostfix'))]",
         "private-dns-zone-name": "[concat(parameters('resourcenameprefix'), '-dnszone.web', parameters('resourcenamepostfix'))]",
-        "log-workspace-name": "[concat(parameters('resourcenameprefix'), '-logs', parameters('resourcenamepostfix'))]",
+        "log-workspace-name": "[concat(parameters('resourcenameprefix'), '-logspace', parameters('resourcenamepostfix'))]",
         "servicebus-name": "[concat(parameters('resourcenameprefix'), '-messages', parameters('resourcenamepostfix'))]",
         "app-service-plan-name": "[concat(parameters('resourcenameprefix'), '-serviceplan', parameters('resourcenamepostfix'))]",
         "vnet-name": "[concat(parameters('resourcenameprefix'), '-network', parameters('resourcenamepostfix'))]",
         "subnet-web-name": "[concat(parameters('resourcenameprefix'), '-web-tier-subnet', parameters('resourcenamepostfix'))]",
         "subnet-services-name": "[concat(parameters('resourcenameprefix'), '-services-tier-subnet', parameters('resourcenamepostfix'))]",
         "app-name": "[concat(parameters('resourcenameprefix'), '-app', parameters('resourcenamepostfix'))]",
-        "nic-servicebus-name": "[concat(parameters('resourcenameprefix'), '-servicebus-nic', parameters('resourcenamepostfix'))]",
-        "nic-keyvault-name": "[concat(parameters('resourcenameprefix'), '-keyvault-nic', parameters('resourcenamepostfix'))]",
         "privateendpoint-servicebus": "[concat(parameters('resourcenameprefix'), '-privateendpoint-servicebus', parameters('resourcenamepostfix'))]",
         "privateendpoint-keyvault": "[concat(parameters('resourcenameprefix'), '-privateendpoint-keyvault', parameters('resourcenamepostfix'))]"
     },
@@ -132,7 +130,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('privateendpoint-servicebus')).networkInterfaces[0].ipConfigurations[0].properties.privateIPAddress]"
+                        "ipv4Address": "[reference(variables('privateendpoint-servicebus')).customDnsConfigs[0].ipAddresses[0]]"
                     }
                 ]
             }
@@ -148,7 +146,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('privateendpoint-keyvault')).networkInterfaces[0].ipConfigurations[0].properties.privateIPAddress]"
+                        "ipv4Address": "[reference(variables('privateendpoint-keyvault')).customDnsConfigs[0].ipAddresses[0]]"
                     }
                 ]
             }
