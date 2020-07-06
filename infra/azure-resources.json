@@ -122,64 +122,6 @@
             }
         },
         {
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2020-04-01",
-            "name": "[variables('nic-servicebus-name')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-services-name'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "namespace-namespace.privateEndpoint",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-services-name'))]"
-                            },
-                            "primary": true,
-                            "privateIPAddressVersion": "IPv4"
-                        }
-                    }
-                ],
-                "dnsSettings": {
-                    "dnsServers": []
-                },
-                "enableAcceleratedNetworking": false,
-                "enableIPForwarding": false
-            }
-        },
-        {
-            "type": "Microsoft.Network/networkInterfaces",
-            "apiVersion": "2020-04-01",
-            "name": "[variables('nic-keyvault-name')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-services-name'))]"
-            ],
-            "properties": {
-                "ipConfigurations": [
-                    {
-                        "name": "vault-default.privateEndpoint",
-                        "properties": {
-                            "privateIPAllocationMethod": "Dynamic",
-                            "subnet": {
-                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-services-name'))]"
-                            },
-                            "primary": true,
-                            "privateIPAddressVersion": "IPv4"
-                        }
-                    }
-                ],
-                "dnsSettings": {
-                    "dnsServers": []
-                },
-                "enableAcceleratedNetworking": false,
-                "enableIPForwarding": false
-            }
-        },
-        {
             "type": "Microsoft.Network/privateDnsZones/A",
             "apiVersion": "2018-09-01",
             "name": "[concat(variables('private-dns-zone-name'), '/servicebus')]",
