@@ -167,7 +167,7 @@
                         "10.3.0.0/16"
                     ]
                 },
-                   "subnets": [
+                "subnets": [
                     {
                         "name": "[variables('subnet-services-name')]",
                         "properties": {
@@ -283,7 +283,21 @@
             "properties": {
                 "enabled": true,
                 "serverFarmId": "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
-            }
+            },
+            "resources": [
+                {
+                    "name": "virtualNetwork",
+                    "type": "networkConfig",
+                    "apiVersion": "2019-08-01",
+                    "dependsOn": [
+                        "[resourceId('Microsoft.Web/sites', variables('app-name'))]"
+                    ],
+                    "properties": {
+                        "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-web-name'))]",
+                        "swiftSupported": true
+                    }
+                }
+            ]
         },
         {
             "type": "Microsoft.Web/sites/config",
@@ -466,20 +480,6 @@
                         }
                     }
                 ]
-            }
-        },
-        {
-            "type": "Microsoft.Web/sites/virtualNetworkConnections",
-            "apiVersion": "2018-11-01",
-            "name": "[concat(variables('app-name'), '/web-tier-connection')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('app-name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
-            ],
-            "properties": {
-                "vnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-web-name'))]",
-                "isSwift": true
             }
         }
     ]
