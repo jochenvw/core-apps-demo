@@ -173,7 +173,7 @@
                         "properties": {
                             "addressPrefix": "10.3.1.0/27",
                             "networkSecurityGroup": {
-                                "id": "[variables('default-nsg-name')]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
                             },
                             "serviceEndpoints": [],
                             "delegations": [],
@@ -186,7 +186,7 @@
                         "properties": {
                             "addressPrefix": "10.3.0.0/26",
                             "networkSecurityGroup": {
-                                "id": "[variables('default-nsg-name')]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
                             },
                             "delegations": [
                                 {
@@ -204,50 +204,6 @@
                 "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
                 "enableVmProtection": false
-            }
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworks/subnets",
-            "apiVersion": "2020-04-01",
-            "name": "[concat(variables('vnet-name'), '/', variables('subnet-services-name'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-            ],
-            "properties": {
-                "addressPrefix": "10.3.1.0/27",
-                "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-                },
-                "serviceEndpoints": [],
-                "delegations": [],
-                "privateEndpointNetworkPolicies": "Disabled",
-                "privateLinkServiceNetworkPolicies": "Enabled"
-            }
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworks/subnets",
-            "apiVersion": "2020-04-01",
-            "name": "[concat(variables('vnet-name'), '/', variables('subnet-web-name'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-            ],
-            "properties": {
-                "addressPrefix": "10.3.0.0/26",
-                "networkSecurityGroup": {
-                    "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-                },
-                "delegations": [
-                    {
-                        "name": "delegation",
-                        "properties": {
-                            "serviceName": "Microsoft.Web/serverfarms"
-                        }
-                    }
-                ],
-                "privateEndpointNetworkPolicies": "Enabled",
-                "privateLinkServiceNetworkPolicies": "Enabled"
             }
         },
         {
