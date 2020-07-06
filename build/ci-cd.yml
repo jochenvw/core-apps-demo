@@ -1,0 +1,24 @@
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+stages:
+- stage: 'Build & package'
+  jobs:
+  - job:
+    displayName: 'Package up scripts'
+    steps:
+    - task: CopyFiles@2
+      inputs:
+        SourceFolder: '/$(Build.SourcesDirectory)/infra'
+        Contents: '*.json'
+        TargetFolder: '/$(Build.ArtifactStagingDirectory)/infra'
+    - task: PublishBuildArtifacts@1
+      inputs:
+        PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+        ArtifactName: 'drop'
+        publishLocation: 'Container'
