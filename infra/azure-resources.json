@@ -167,6 +167,40 @@
                         "10.3.0.0/16"
                     ]
                 },
+                   "subnets": [
+                    {
+                        "name": "[variables('subnet-services-name')]",
+                        "properties": {
+                            "addressPrefix": "10.3.1.0/27",
+                            "networkSecurityGroup": {
+                                "id": "[variables('default-nsg-name')]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet-web-name')]",
+                        "properties": {
+                            "addressPrefix": "10.3.0.0/26",
+                            "networkSecurityGroup": {
+                                "id": "[variables('default-nsg-name')]"
+                            },
+                            "delegations": [
+                                {
+                                    "name": "delegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Web/serverfarms"
+                                    }
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+                ],
                 "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
                 "enableVmProtection": false
