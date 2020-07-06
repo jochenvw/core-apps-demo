@@ -1,3 +1,7 @@
 az group create --name jvw-coreapp-demo --location westeurope
-az group deployment validate --resource-group jvw-coreapp-demo --template-file ../infra/azure-resources.json
-az group deployment create --resource-group jvw-coreapp-demo --template-file ../infra/azure-resources.json
+az group deployment validate --resource-group jvw-coreapp-demo-dev --template-file ../infra/azure-resources.json --template-parameter-file ../infra/resource-parameters.dev.json
+az group deployment create --resource-group jvw-coreapp-demo-dev --template-file ../infra/azure-resources.json --template-parameter-file ../infra/resource-parameters.dev.json
+
+
+az group deployment validate --resource-group jvw-coreapp-demo-test --template-file ../infra/azure-resources.json --template-parameter-file ../infra/resource-parameters.test.json
+az group deployment create --resource-group jvw-coreapp-demo-test --template-file ../infra/azure-resources.json --template-parameter-file ../infra/resource-parameters.test.json
