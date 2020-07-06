@@ -132,7 +132,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('privateendpoint-servicebus')).ipConfigurations[0].properties.privateIPAddress]"
+                        "ipv4Address": "[reference(variables('privateendpoint-servicebus')).networkInterfaces.ipConfigurations[0].properties.privateIPAddress]"
                     }
                 ]
             }
@@ -148,7 +148,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('privateendpoint-keyvault')).ipConfigurations[0].properties.privateIPAddress]"
+                        "ipv4Address": "[reference(variables('privateendpoint-keyvault')).networkInterfaces.ipConfigurations[0].properties.privateIPAddress]"
                     }
                 ]
             }
@@ -381,7 +381,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-services-name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
             ],
             "properties": {
                 "privateLinkServiceConnections": [
@@ -409,7 +409,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.KeyVault/vaults', variables('keyvault-name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-services-name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
             ],
             "properties": {
                 "privateLinkServiceConnections": [
@@ -475,7 +475,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/sites', variables('app-name'))]",
-                "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-web-name'))]"
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
             ],
             "properties": {
                 "vnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-web-name'))]",
