@@ -12,7 +12,7 @@
         }
     },
     "variables": {
-        "keyvaylt-name": "[concat(parameters('resourcenameprefix'), '-secrets', parameters('resourcenamepostfix'))]",
+        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secrets', parameters('resourcenamepostfix'))]",
         "default-nsg-name": "[concat(parameters('resourcenameprefix'), '-nsg', parameters('resourcenamepostfix'))]",
         "private-dns-zone-name": "[concat(parameters('resourcenameprefix'), '-dnszone.web', parameters('resourcenamepostfix'))]",
         "log-workspace-name": "[concat(parameters('resourcenameprefix'), '-logs', parameters('resourcenamepostfix'))]",
@@ -31,7 +31,7 @@
         {
             "type": "Microsoft.KeyVault/vaults",
             "apiVersion": "2019-09-01",
-            "name": "[variables('keyvaylt-name')]",
+            "name": "[variables('keyvault-name')]",
             "location": "[resourceGroup().location]",
             "properties": {
                 "tenantId": "[subscription().tenantId]",
@@ -476,7 +476,7 @@
             "name": "[variables('privateendpoint-keyvault')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.KeyVault/vaults', variables('keyvaylt-name'))]",
+                "[resourceId('Microsoft.KeyVault/vaults', variables('keyvault-name'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-services-name'))]"
             ],
             "properties": {
@@ -484,7 +484,7 @@
                     {
                         "name": "[concat(variables('privateendpoint-keyvault'), 'vault_endpoint')]",
                         "properties": {
-                            "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', variables('keyvaylt-name'))]",
+                            "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', variables('keyvault-name'))]",
                             "groupIds": [
                                 "vault"
                             ]
