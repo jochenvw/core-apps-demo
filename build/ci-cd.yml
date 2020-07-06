@@ -7,7 +7,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 stages:
-- stage: 'Build'
+- stage: 'BUILD'
   jobs:
   - job:
     displayName: 'Package up scripts'
@@ -22,3 +22,51 @@ stages:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
         publishLocation: 'Container'
+
+stages:
+- stage: 'DEV'
+  jobs:
+  - job:
+    displayName: 'Deploy resources'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: '$(serviceconnection)'
+        subscriptionId: '$(subscriptionid)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: 'jvw-coreapp-demo'
+        location: 'West Europe'
+        templateLocation: 'Linked artifact'
+        csmFile: '/infra/azure-resources.json'
+        csmParametersFile: '/infra/resource-parameters.dev.json'
+        deploymentMode: 'Complete'
+
+stages:
+- stage: 'TEST'
+  jobs:
+  - job:
+    displayName: 'Deploy resources'
+    steps:
+    - task: DownloadBuildArtifacts@0
+      inputs:
+        buildType: 'current'
+        downloadType: 'single'
+        downloadPath: '$(System.ArtifactsDirectory)'
+    - task: AzureResourceManagerTemplateDeployment@3
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: '$(serviceconnection)'
+        subscriptionId: '$(subscriptionid)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: 'jvw-coreapp-demo'
+        location: 'West Europe'
+        templateLocation: 'Linked artifact'
+        csmFile: '/infra/azure-resources.json'
+        csmParametersFile: '/infra/resource-parameters.test.json'
+        deploymentMode: 'Complete'
