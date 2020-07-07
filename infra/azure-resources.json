@@ -171,6 +171,22 @@
             }
         },
         {
+            "type": "Microsoft.Network/privateDnsZones/A",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(variables('private-dns-zone-name'), '/', variables('app-name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
+            ],
+            "properties": {
+                "ttl": 10,
+                "aRecords": [
+                    {
+                        "ipv4Address": "[reference(variables('privateendpoint-webapp')).customDnsConfigs[0].ipAddresses[0]]"
+                    }
+                ]
+            }
+        },
+        {
             "type": "Microsoft.Network/virtualNetworks",
             "apiVersion": "2020-04-01",
             "name": "[variables('vnet-name')]",
