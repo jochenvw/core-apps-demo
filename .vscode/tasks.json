@@ -4,14 +4,24 @@
     "version": "2.0.0",
     "tasks": [
         {
-            "label": "deploy ARM template",
+            "group": "build",
+            "label": "deploy ARM template to DEV",
             "type": "shell",
-            "command": "cmd < deploy.azcli",
+            "command": "cmd < deploy-dev.azcli",
             "options": {
                 "cwd": "${workspaceFolder}/scripts"
             },
             "problemMatcher": []
-
+        },
+        {
+            "group": "build",
+            "label": "deploy ARM template to TEST",
+            "type": "shell",
+            "command": "cmd < deploy-test.azcli",
+            "options": {
+                "cwd": "${workspaceFolder}/scripts"
+            },
+            "problemMatcher": []
         }
     ]
 }

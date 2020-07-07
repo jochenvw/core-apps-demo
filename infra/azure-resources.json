@@ -14,7 +14,7 @@
     "variables": {
         "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secret', parameters('resourcenamepostfix'))]",
         "default-nsg-name": "[concat(parameters('resourcenameprefix'), '-nsg', parameters('resourcenamepostfix'))]",
-        "private-dns-zone-name": "[concat(parameters('resourcenameprefix'), '-dnszone.web', parameters('resourcenamepostfix'))]",
+        "private-dns-zone-name": "privatelink.azurewebsites.net",
         "log-workspace-name": "[concat(parameters('resourcenameprefix'), '-logspace', parameters('resourcenamepostfix'))]",
         "servicebus-name": "[concat(parameters('resourcenameprefix'), '-messages', parameters('resourcenamepostfix'))]",
         "app-service-plan-name": "[concat(parameters('resourcenameprefix'), '-serviceplan', parameters('resourcenamepostfix'))]",
