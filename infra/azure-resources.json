@@ -84,26 +84,27 @@
             }
         },
         {
-            "type": "Microsoft.Network/networkSecurityGroups",
-            "apiVersion": "2020-04-01",
-            "name": "[variables('default-nsg-name')]",
-            "location": "[resourceGroup().location]",
+            "type": "Microsoft.KeyVault/vaults/accessPolicies",
+            "name": "[concat(variables('keyvault-name'), '/add')]",
+            "apiVersion": "2018-02-14",
             "properties": {
-                "securityRules": []
-            }
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones",
-            "apiVersion": "2018-09-01",
-            "name": "[variables('private-dns-zone-name')]",
-            "location": "global",
-            "properties": {
-                "maxNumberOfRecordSets": 25000,
-                "maxNumberOfVirtualNetworkLinks": 1000,
-                "maxNumberOfVirtualNetworkLinksWithRegistration": 100,
-                "numberOfRecordSets": 2,
-                "numberOfVirtualNetworkLinks": 0,
-                "numberOfVirtualNetworkLinksWithRegistration": 0
+                "accessPolicies": [
+                    {
+                        "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('webapp-name')), '2019-08-01', 'Full').identity.principalId]",
+                        "tenantId": "[subscription().tenantId]",
+                        "permissions": {
+                            "keys": [
+                            ],
+                            "secrets": [
+                                "Get",
+                                "List"
+                            ],
+                            "certificates": [
+                            ]
+                        },
+                        "applicationId": null
+                    }
+                ]
             }
         },
         {
@@ -145,237 +146,6 @@
                 "targetWorkerSizeId": 0
             }
         },
-        {
-            "type": "Microsoft.Network/privateDnsZones/A",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(variables('private-dns-zone-name'), '/', variables('servicebus-dns-name'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
-            ],
-            "properties": {
-                "ttl": 10,
-                "aRecords": [
-                    {
-                        "ipv4Address": "[reference(variables('privateendpoint-servicebus-name')).customDnsConfigs[0].ipAddresses[0]]"
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/A",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(variables('private-dns-zone-name'), '/', variables('keyvault-dns-name'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
-            ],
-            "properties": {
-                "ttl": 10,
-                "aRecords": [
-                    {
-                        "ipv4Address": "[reference(variables('privateendpoint-keyvault-name')).customDnsConfigs[0].ipAddresses[0]]"
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/A",
-            "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),'true')]",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(variables('private-dns-zone-name'), '/', variables('webapp-name'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
-            ],
-            "properties": {
-                "ttl": 10,
-                "aRecords": [
-                    {
-                        "ipv4Address": "[reference(variables('privateendpoint-webapp-name')).customDnsConfigs[0].ipAddresses[0]]"
-                    }
-                ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/virtualNetworks",
-            "apiVersion": "2020-04-01",
-            "name": "[variables('vnet-name')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-            ],
-            "properties": {
-                "addressSpace": {
-                    "addressPrefixes": [
-                        "10.0.0.0/16"
-                    ]
-                },
-                "subnets": [
-                    {
-                        "name": "[variables('subnet-appgw-name')]",
-                        "properties": {
-                            "addressPrefix": "10.0.1.0/24",
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-                            },
-                            "serviceEndpoints": [],
-                            "delegations": [],
-                            "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        }
-                    },
-                    {
-                        "name": "[variables('subnet-bastion-name')]",
-                        "properties": {
-                            "addressPrefix": "10.0.2.0/24",
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-                            },
-                            "serviceEndpoints": [],
-                            "delegations": [],
-                            "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        }
-                    },
-                    {
-                        "name": "[variables('subnet-app1-name')]",
-                        "properties": {
-                            "addressPrefix": "10.0.10.0/24",
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-                            },
-                            "delegations": [
-                                {
-                                    "name": "delegation",
-                                    "properties": {
-                                        "serviceName": "Microsoft.Web/serverfarms"
-                                    }
-                                }
-                            ],
-                            "privateEndpointNetworkPolicies": "Enabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        }
-                    },
-                    {
-                        "name": "[variables('subnet-app2-name')]",
-                        "properties": {
-                            "addressPrefix": "10.0.11.0/24",
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-                            },
-                            "delegations": [
-                                {
-                                    "name": "delegation",
-                                    "properties": {
-                                        "serviceName": "Microsoft.Web/serverfarms"
-                                    }
-                                }
-                            ],
-                            "privateEndpointNetworkPolicies": "Enabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        }
-                    },
-                    {
-                        "name": "[variables('subnet-services-name')]",
-                        "properties": {
-                            "addressPrefix": "10.0.20.0/24",
-                            "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
-                            },
-                            "serviceEndpoints": [],
-                            "delegations": [],
-                            "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
-                        }
-                    }
-
-                ],
-                "virtualNetworkPeerings": [],
-                "enableDdosProtection": false,
-                "enableVmProtection": false
-            }
-        },
-
-
-        {
-            "type": "Microsoft.ServiceBus/namespaces",
-            "apiVersion": "2018-01-01-preview",
-            "name": "[variables('servicebus-name')]",
-            "location": "[resourceGroup().location]",
-            "sku": {
-                "name": "Premium",
-                "tier": "Premium",
-                "capacity": 1
-            },
-            "properties": {
-                "zoneRedundant": true
-            }
-        },
-
-        {
-            "type": "Microsoft.ServiceBus/namespaces/networkRuleSets",
-            "apiVersion": "2018-01-01-preview",
-            "name": "[concat(variables('servicebus-name'), '/default')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]"
-            ],
-            "properties": {
-                "defaultAction": "Deny",
-                "virtualNetworkRules": [],
-                "ipRules": []
-            }
-        },
-
-
-        {
-            "type": "Microsoft.ServiceBus/namespaces/queues",
-            "apiVersion": "2017-04-01",
-            "name": "[concat(variables('servicebus-name'), '/inbound')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]"
-            ],
-            "properties": {
-                "lockDuration": "PT30S",
-                "maxSizeInMegabytes": 1024,
-                "requiresDuplicateDetection": false,
-                "requiresSession": false,
-                "defaultMessageTimeToLive": "P14D",
-                "deadLetteringOnMessageExpiration": false,
-                "enableBatchedOperations": true,
-                "duplicateDetectionHistoryTimeWindow": "PT10M",
-                "maxDeliveryCount": 10,
-                "status": "Active",
-                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
-                "enablePartitioning": false,
-                "enableExpress": false
-            }
-        },
-        {
-            "type": "Microsoft.ServiceBus/namespaces/queues",
-            "apiVersion": "2017-04-01",
-            "name": "[concat(variables('servicebus-name'), '/outbound')]",
-            "location": "[resourceGroup().location]",
-            "dependsOn": [
-                "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]"
-            ],
-            "properties": {
-                "lockDuration": "PT30S",
-                "maxSizeInMegabytes": 1024,
-                "requiresDuplicateDetection": false,
-                "requiresSession": false,
-                "defaultMessageTimeToLive": "P14D",
-                "deadLetteringOnMessageExpiration": false,
-                "enableBatchedOperations": true,
-                "duplicateDetectionHistoryTimeWindow": "PT10M",
-                "maxDeliveryCount": 10,
-                "status": "Active",
-                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
-                "enablePartitioning": false,
-                "enableExpress": false
-            }
-        },
-
-
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2018-11-01",
@@ -481,6 +251,146 @@
             }
         },
         {
+            "name": "[variables('appinsights-name')]",
+            "type": "Microsoft.Insights/components",
+            "apiVersion": "2018-05-01-preview",
+            "location": "[resourceGroup().location]",
+            "kind": "web",
+            "dependsOn": [
+                "[resourceId('Microsoft.Web/sites', variables('webapp-name'))]"
+            ],
+            "properties": {
+                "applicationId": "[variables('webapp-name')]",
+                "application_Type": "web"
+            }
+        },
+        {
+            "name": "[concat(variables('webapp-name'), '/appsettings')]",
+            "type": "Microsoft.Web/sites/config",
+            "apiVersion": "2019-08-01",
+            "properties": {
+                "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appinsights-name')), '2018-05-01-preview').InstrumentationKey]",
+                "WEBSITE_VNET_ROUTE_ALL": "1",
+                "WEBSITE_DNS_SERVER": "168.63.129.16",
+                "KEYVAULT_URI": "[concat('https://', variables('keyvault-dns-name'), '.', variables('private-dns-zone-name'))]",
+                "SERVICEBUS_URI": "[concat('https://', variables('servicebus-dns-name'), '.', variables('private-dns-zone-name'))]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-04-01",
+            "name": "[variables('vnet-name')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+            ],
+            "properties": {
+                "addressSpace": {
+                    "addressPrefixes": [
+                        "10.0.0.0/16"
+                    ]
+                },
+                "subnets": [
+                    {
+                        "name": "[variables('subnet-appgw-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.1.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet-bastion-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.2.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet-app1-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.10.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "delegations": [
+                                {
+                                    "name": "delegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Web/serverfarms"
+                                    }
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet-app2-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.11.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "delegations": [
+                                {
+                                    "name": "delegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Web/serverfarms"
+                                    }
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet-services-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.20.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    }
+
+                ],
+                "virtualNetworkPeerings": [],
+                "enableDdosProtection": false,
+                "enableVmProtection": false
+            }
+        },
+        {
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "apiVersion": "2020-04-01",
+            "name": "[variables('default-nsg-name')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": []
+            }
+        },
+        {
+            "type": "Microsoft.Network/privateDnsZones",
+            "apiVersion": "2018-09-01",
+            "name": "[variables('private-dns-zone-name')]",
+            "location": "global"
+        },
+        {
             "type": "Microsoft.Network/privateDnsZones/virtualNetworkLinks",
             "apiVersion": "2018-09-01",
             "name": "[concat(variables('private-dns-zone-name'), '/dnszonelink')]",
@@ -525,6 +435,22 @@
             }
         },
         {
+            "type": "Microsoft.Network/privateDnsZones/A",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(variables('private-dns-zone-name'), '/', variables('servicebus-dns-name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
+            ],
+            "properties": {
+                "ttl": 10,
+                "aRecords": [
+                    {
+                        "ipv4Address": "[reference(variables('privateendpoint-servicebus-name')).customDnsConfigs[0].ipAddresses[0]]"
+                    }
+                ]
+            }
+        },
+        {
             "type": "Microsoft.Network/privateEndpoints",
             "apiVersion": "2020-04-01",
             "name": "[variables('privateendpoint-keyvault-name')]",
@@ -553,8 +479,24 @@
             }
         },
         {
-            "type": "Microsoft.Network/privateEndpoints",
+            "type": "Microsoft.Network/privateDnsZones/A",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(variables('private-dns-zone-name'), '/', variables('keyvault-dns-name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
+            ],
+            "properties": {
+                "ttl": 10,
+                "aRecords": [
+                    {
+                        "ipv4Address": "[reference(variables('privateendpoint-keyvault-name')).customDnsConfigs[0].ipAddresses[0]]"
+                    }
+                ]
+            }
+        },
+        {
             "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),'true')]",
+            "type": "Microsoft.Network/privateEndpoints",
             "apiVersion": "2020-04-01",
             "name": "[variables('privateendpoint-webapp-name')]",
             "location": "westeurope",
@@ -582,7 +524,23 @@
                 ]
             }
         },
-
+        {
+            "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),'true')]",
+            "type": "Microsoft.Network/privateDnsZones/A",
+            "apiVersion": "2018-09-01",
+            "name": "[concat(variables('private-dns-zone-name'), '/', variables('webapp-name'))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
+            ],
+            "properties": {
+                "ttl": 10,
+                "aRecords": [
+                    {
+                        "ipv4Address": "[if(equals(parameters('enablePrivateLinkOnWebApp'),'true'), reference(variables('privateendpoint-webapp-name')).customDnsConfigs[0].ipAddresses[0], '')]"
+                    }
+                ]
+            }
+        },
         {
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
             "apiVersion": "2020-04-01",
@@ -622,53 +580,79 @@
             }
         },
         {
-            "name": "[variables('appinsights-name')]",
-            "type": "Microsoft.Insights/components",
-            "apiVersion": "2018-05-01-preview",
+            "type": "Microsoft.ServiceBus/namespaces",
+            "apiVersion": "2018-01-01-preview",
+            "name": "[variables('servicebus-name')]",
             "location": "[resourceGroup().location]",
-            "kind": "web",
+            "sku": {
+                "name": "Premium",
+                "tier": "Premium",
+                "capacity": 1
+            },
+            "properties": {
+                "zoneRedundant": true
+            }
+        },
+        {
+            "type": "Microsoft.ServiceBus/namespaces/networkRuleSets",
+            "apiVersion": "2018-01-01-preview",
+            "name": "[concat(variables('servicebus-name'), '/default')]",
+            "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('webapp-name'))]"
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]"
             ],
             "properties": {
-                "applicationId": "[variables('webapp-name')]",
-                "application_Type": "web"
+                "defaultAction": "Deny",
+                "virtualNetworkRules": [],
+                "ipRules": []
             }
         },
         {
-            "name": "[concat(variables('webapp-name'), '/appsettings')]",
-            "type": "Microsoft.Web/sites/config",
-            "apiVersion": "2019-08-01",
+            "type": "Microsoft.ServiceBus/namespaces/queues",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('servicebus-name'), '/inbound')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]"
+            ],
             "properties": {
-                "APPINSIGHTS_INSTRUMENTATIONKEY": "[reference(resourceId('Microsoft.Insights/components', variables('appinsights-name')), '2018-05-01-preview').InstrumentationKey]",
-                "WEBSITE_VNET_ROUTE_ALL": "1",
-                "WEBSITE_DNS_SERVER": "168.63.129.16",
-                "KEYVAULT_URI": "[concat('https://', variables('keyvault-dns-name'), '.', variables('private-dns-zone-name'))]",
-                "SERVICEBUS_URI": "[concat('https://', variables('servicebus-dns-name'), '.', variables('private-dns-zone-name'))]"
+                "lockDuration": "PT30S",
+                "maxSizeInMegabytes": 1024,
+                "requiresDuplicateDetection": false,
+                "requiresSession": false,
+                "defaultMessageTimeToLive": "P14D",
+                "deadLetteringOnMessageExpiration": false,
+                "enableBatchedOperations": true,
+                "duplicateDetectionHistoryTimeWindow": "PT10M",
+                "maxDeliveryCount": 10,
+                "status": "Active",
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+                "enablePartitioning": false,
+                "enableExpress": false
             }
         },
         {
-            "type": "Microsoft.KeyVault/vaults/accessPolicies",
-            "name": "[concat(variables('keyvault-name'), '/add')]",
-            "apiVersion": "2018-02-14",
+            "type": "Microsoft.ServiceBus/namespaces/queues",
+            "apiVersion": "2017-04-01",
+            "name": "[concat(variables('servicebus-name'), '/outbound')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]"
+            ],
             "properties": {
-                "accessPolicies": [
-                    {
-                        "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('webapp-name')), '2019-08-01', 'Full').identity.principalId]",
-                        "tenantId": "[subscription().tenantId]",
-                        "permissions": {
-                            "keys": [
-                            ],
-                            "secrets": [
-                                "Get",
-                                "List"
-                            ],
-                            "certificates": [
-                            ]
-                        },
-                        "applicationId": null
-                    }
-                ]
+                "lockDuration": "PT30S",
+                "maxSizeInMegabytes": 1024,
+                "requiresDuplicateDetection": false,
+                "requiresSession": false,
+                "defaultMessageTimeToLive": "P14D",
+                "deadLetteringOnMessageExpiration": false,
+                "enableBatchedOperations": true,
+                "duplicateDetectionHistoryTimeWindow": "PT10M",
+                "maxDeliveryCount": 10,
+                "status": "Active",
+                "autoDeleteOnIdle": "P10675199DT2H48M5.4775807S",
+                "enablePartitioning": false,
+                "enableExpress": false
             }
         },
         {
@@ -695,6 +679,5 @@
                 "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('webapp-name')), '2019-08-01', 'Full').identity.principalId]"
             }
         }
-
     ]
 }
