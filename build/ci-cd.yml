@@ -22,7 +22,7 @@ stages:
       displayName: "Copy documentation files"
       inputs:
         SourceFolder: '/$(Build.SourcesDirectory)/docs'
-        Contents: '*.json'
+        Contents: '*.md'
         TargetFolder: '/$(Build.ArtifactStagingDirectory)/docs'
     - task: PublishBuildArtifacts@1
       displayName: "Publish package to Azure DevOps artifacts repo"
