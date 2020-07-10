@@ -29,11 +29,18 @@
             "metadata": {
                 "description": "Desirable for PROD certainly, but probably false for DEV/TEST as it makes fresh deployments much easier"
             }
+        },
+        "enablePrivateLinkOnWebApp": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Flag to disable private link on the webapp. Rationale is to run this template with value FALSE first, deploy app, run again on TRUE to lock things down"
+            }
         }
     },
     "variables": {
         "#": "== Resources ==",
-        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secrets', parameters('resourcenamepostfix'))]",
+        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secretz', parameters('resourcenamepostfix'))]",
         "log-workspace-name": "[concat(parameters('resourcenameprefix'), '-logspace', parameters('resourcenamepostfix'))]",
         "servicebus-name": "[concat(parameters('resourcenameprefix'), '-messages', parameters('resourcenamepostfix'))]",
         "app-service-plan-name": "[concat(parameters('resourcenameprefix'), '-serviceplan', parameters('resourcenamepostfix'))]",
@@ -172,6 +179,7 @@
         },
         {
             "type": "Microsoft.Network/privateDnsZones/A",
+            "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),'true')]",
             "apiVersion": "2018-09-01",
             "name": "[concat(variables('private-dns-zone-name'), '/', variables('webapp-name'))]",
             "dependsOn": [
@@ -546,6 +554,7 @@
         },
         {
             "type": "Microsoft.Network/privateEndpoints",
+            "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),'true')]",
             "apiVersion": "2020-04-01",
             "name": "[variables('privateendpoint-webapp-name')]",
             "location": "westeurope",
@@ -570,18 +579,6 @@
                     "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-services-name'))]"
                 },
                 "customDnsConfigs": [
-                    {
-                        "fqdn": "coreapp-dev-app.azurewebsites.net",
-                        "ipAddresses": [
-                            "10.3.1.6"
-                        ]
-                    },
-                    {
-                        "fqdn": "coreapp-dev-app.scm.azurewebsites.net",
-                        "ipAddresses": [
-                            "10.3.1.6"
-                        ]
-                    }
                 ]
             }
         },

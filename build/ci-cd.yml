@@ -43,6 +43,22 @@ stages:
         artifactName: 'drop'
         downloadPath: '$(System.ArtifactsDirectory)'
     - task: AzureResourceManagerTemplateDeployment@3
+      displayName: 'Deploy ARM template - WebApps public endpoints enabled'
+      inputs:
+        deploymentScope: 'Resource Group'
+        azureResourceManagerConnection: '$(serviceconnection)'
+        subscriptionId: '$(subscriptionid)'
+        action: 'Create Or Update Resource Group'
+        resourceGroupName: 'jvw-coreapp-demo-dev'
+        location: 'West Europe'
+        templateLocation: 'Linked artifact'
+        csmFile: '$(System.ArtifactsDirectory)/drop/infra/azure-resources.json'
+        csmParametersFile: '$(System.ArtifactsDirectory)/drop/infra/resource-parameters.dev.json'
+        deploymentMode: 'Complete'
+        overrideParameters: '-enablePrivateLinkOnWebApp false'
+        deploymentOutputs: 'arm-outputs'
+    - task: AzureResourceManagerTemplateDeployment@3
+    displayName: 'Deploy ARM template - WebApps public endpoints locked down'
       inputs:
         deploymentScope: 'Resource Group'
         azureResourceManagerConnection: '$(serviceconnection)'
