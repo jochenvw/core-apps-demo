@@ -163,7 +163,8 @@
             "name": "[variables('webapp-name')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
+                "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]",
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
             ],
             "kind": "app",
             "identity": {
@@ -294,6 +295,7 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('bastion-nsg-name'))]"
             ],
             "properties": {
                 "addressSpace": {
