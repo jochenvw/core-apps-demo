@@ -43,7 +43,7 @@
         "##": "== Network resources ==",
         "vnet-name": "[concat(parameters('resourcenameprefix'), '-network', parameters('resourcenamepostfix'))]",
         "subnet-appgw-name": "[concat(parameters('resourcenameprefix'), '-gateway-subnet', parameters('resourcenamepostfix'))]",
-        "subnet-bastion-name": "[concat(parameters('resourcenameprefix'), '-bastion-subnet', parameters('resourcenamepostfix'))]",
+        "subnet-bastion-name": "AzureBastionSubnet",
         "subnet-app1-name": "[concat(parameters('resourcenameprefix'), '-public-app-subnet', parameters('resourcenamepostfix'))]",
         "subnet-app2-name": "[concat(parameters('resourcenameprefix'), '-private-app-subnet', parameters('resourcenamepostfix'))]",
         "subnet-services-name": "[concat(parameters('resourcenameprefix'), '-services-subnet', parameters('resourcenamepostfix'))]",
