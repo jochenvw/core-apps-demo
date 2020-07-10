@@ -5,6 +5,16 @@
     "tasks": [
         {
             "group": "build",
+            "label": "Validate ARM template",
+            "type": "shell",
+            "command": "cmd < validate-arm.azcli",
+            "options": {
+                "cwd": "${workspaceFolder}/scripts"
+            },
+            "problemMatcher": []
+        },
+        {
+            "group": "build",
             "label": "deploy ARM template to DEV",
             "type": "shell",
             "command": "cmd < deploy-dev.azcli",
