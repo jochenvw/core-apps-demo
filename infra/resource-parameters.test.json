@@ -4,6 +4,9 @@
     "parameters": {
         "resourcenameprefix": {
             "value": "coreapp-test"
+        },
+        "enableSoftDeleteOnKeyVaults": {
+            "value": false
         }
     }
 }

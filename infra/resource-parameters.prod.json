@@ -3,10 +3,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "resourcenameprefix": {
-            "value": "coreapp-dev"
-        },
-        "enableSoftDeleteOnKeyVaults": {
-            "value": false
+            "value": "coreapp-test"
         }
     }
 }

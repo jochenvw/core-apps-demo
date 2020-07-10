@@ -22,11 +22,18 @@
             "metadata": {
                 "description": "Flag to also deploy an application gateway in the VNET in order to make the Web Apps available from outside."
             }
+        },
+        "enableSoftDeleteOnKeyVaults": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Desirable for PROD certainly, but probably false for DEV/TEST as it makes fresh deployments much easier"
+            }
         }
     },
     "variables": {
         "#": "== Resources ==",
-        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secret', parameters('resourcenamepostfix'))]",
+        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secrets', parameters('resourcenamepostfix'))]",
         "log-workspace-name": "[concat(parameters('resourcenameprefix'), '-logspace', parameters('resourcenamepostfix'))]",
         "servicebus-name": "[concat(parameters('resourcenameprefix'), '-messages', parameters('resourcenamepostfix'))]",
         "app-service-plan-name": "[concat(parameters('resourcenameprefix'), '-serviceplan', parameters('resourcenamepostfix'))]",
@@ -66,7 +73,7 @@
                 "enabledForDeployment": false,
                 "enabledForDiskEncryption": false,
                 "enabledForTemplateDeployment": true,
-                "enableSoftDelete": true
+                "enableSoftDelete": "[parameters('enableSoftDeleteOnKeyVaults')]"
             }
         },
         {
@@ -161,21 +168,6 @@
                         "ipv4Address": "[reference(variables('privateendpoint-keyvault-name')).customDnsConfigs[0].ipAddresses[0]]"
                     }
                 ]
-            }
-        },
-        {
-            "type": "Microsoft.Network/privateDnsZones/CNAME",
-            "apiVersion": "2018-09-01",
-            "name": "[concat(variables('private-dns-zone-name'), '/', variables('webapp-name'))]",
-            "dependsOn": [
-                "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
-            ],
-            "properties": {
-                "ttl": 10,
-                "cnameRecord": {
-                    "cname": "[concat(variables('webapp-name'), '.azurewebsites.net')]"
-                }
-
             }
         },
         {
