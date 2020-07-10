@@ -58,7 +58,7 @@ stages:
         overrideParameters: '-enablePrivateLinkOnWebApp false'
         deploymentOutputs: 'arm-outputs'
     - task: AzureResourceManagerTemplateDeployment@3
-    displayName: 'Deploy ARM template - WebApps public endpoints locked down'
+      displayName: 'Deploy ARM template - WebApps public endpoints locked down'
       inputs:
         deploymentScope: 'Resource Group'
         azureResourceManagerConnection: '$(serviceconnection)'
