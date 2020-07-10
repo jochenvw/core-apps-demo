@@ -16,11 +16,18 @@
                 "description": "Prefix put in front of all resource names, wherever possible. Left empty for now."
             }
         },
-        "include-application-gateway": {
+        "deployApplicationGateway": {
             "type": "bool",
             "defaultValue": false,
             "metadata": {
                 "description": "Flag to also deploy an application gateway in the VNET in order to make the Web Apps available from outside."
+            }
+        },
+        "deployBastionHost": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Flag to deploy BastionHost in VNET."
             }
         },
         "enableSoftDeleteOnKeyVaults": {
@@ -40,7 +47,7 @@
     },
     "variables": {
         "#": "== Resources ==",
-        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secretz', parameters('resourcenamepostfix'))]",
+        "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secrets', parameters('resourcenamepostfix'))]",
         "log-workspace-name": "[concat(parameters('resourcenameprefix'), '-logspace', parameters('resourcenamepostfix'))]",
         "servicebus-name": "[concat(parameters('resourcenameprefix'), '-messages', parameters('resourcenamepostfix'))]",
         "app-service-plan-name": "[concat(parameters('resourcenameprefix'), '-serviceplan', parameters('resourcenamepostfix'))]",
@@ -51,10 +58,14 @@
         "vnet-name": "[concat(parameters('resourcenameprefix'), '-network', parameters('resourcenamepostfix'))]",
         "subnet-appgw-name": "[concat(parameters('resourcenameprefix'), '-gateway-subnet', parameters('resourcenamepostfix'))]",
         "subnet-bastion-name": "AzureBastionSubnet",
+        "bastion-name": "[concat(parameters('resourcenameprefix'), '-bastion', parameters('resourcenamepostfix'))]",
+        "bastion-pip-name": "[concat(parameters('resourcenameprefix'), '-bastion-pip', parameters('resourcenamepostfix'))]",
+
         "subnet-app1-name": "[concat(parameters('resourcenameprefix'), '-public-app-subnet', parameters('resourcenamepostfix'))]",
         "subnet-app2-name": "[concat(parameters('resourcenameprefix'), '-private-app-subnet', parameters('resourcenamepostfix'))]",
         "subnet-services-name": "[concat(parameters('resourcenameprefix'), '-services-subnet', parameters('resourcenamepostfix'))]",
         "default-nsg-name": "[concat(parameters('resourcenameprefix'), '-nsg', parameters('resourcenamepostfix'))]",
+        "bastion-nsg-name": "[concat(parameters('resourcenameprefix'), '-bastion-nsg', parameters('resourcenamepostfix'))]",
         "privateendpoint-servicebus-name": "[concat(parameters('resourcenameprefix'), '-privateendpoint-servicebus', parameters('resourcenamepostfix'))]",
         "privateendpoint-keyvault-name": "[concat(parameters('resourcenameprefix'), '-privateendpoint-keyvault', parameters('resourcenamepostfix'))]",
         "privateendpoint-webapp-name": "[concat(parameters('resourcenameprefix'), '-privateendpoint-webapp', parameters('resourcenamepostfix'))]",
@@ -309,7 +320,7 @@
                         "properties": {
                             "addressPrefix": "10.0.2.0/24",
                             "networkSecurityGroup": {
-                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('bastion-nsg-name'))]"
                             },
                             "serviceEndpoints": [],
                             "delegations": [],
@@ -382,6 +393,87 @@
             "location": "[resourceGroup().location]",
             "properties": {
                 "securityRules": []
+            }
+        },
+        {
+            "apiVersion": "2019-11-01",
+            "type": "Microsoft.Network/networkSecurityGroups",
+            "name": "[variables('bastion-nsg-name')]",
+            "location": "[resourceGroup().location]",
+            "properties": {
+                "securityRules": [
+                    {
+                        "name": "bastion-in-allow",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "Internet",
+                            "destinationPortRange": "443",
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "bastion-control-in-allow",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "GatewayManager",
+                            "destinationPortRanges": [
+                                "443",
+                                "4443"
+                            ],
+                            "destinationAddressPrefix": "*",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "bastion-in-deny",
+                        "properties": {
+                            "protocol": "*",
+                            "sourcePortRange": "*",
+                            "destinationPortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationAddressPrefix": "*",
+                            "access": "Deny",
+                            "priority": 900,
+                            "direction": "Inbound"
+                        }
+                    },
+                    {
+                        "name": "bastion-vnet-out-allow",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationPortRanges": [
+                                "22",
+                                "3389"
+                            ],
+                            "destinationAddressPrefix": "VirtualNetwork",
+                            "access": "Allow",
+                            "priority": 100,
+                            "direction": "Outbound"
+                        }
+                    },
+                    {
+                        "name": "bastion-azure-out-allow",
+                        "properties": {
+                            "protocol": "Tcp",
+                            "sourcePortRange": "*",
+                            "sourceAddressPrefix": "*",
+                            "destinationPortRange": "443",
+                            "destinationAddressPrefix": "AzureCloud",
+                            "access": "Allow",
+                            "priority": 120,
+                            "direction": "Outbound"
+                        }
+                    }
+                ]
             }
         },
         {
@@ -678,6 +770,46 @@
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId , '/providers/Microsoft.Authorization/roleDefinitions/69a216fc-b8fb-44d8-bc22-1f3c2cd27a39')]",
                 "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('webapp-name')), '2019-08-01', 'Full').identity.principalId]"
             }
+        },
+        {
+            "condition": "[equals(parameters('deployBastionHost'),'true')]",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "apiVersion": "2019-02-01",
+            "name": "[variables('bastion-pip-name')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            },
+            "tags": {}
+        },
+        {
+            "condition": "[equals(parameters('deployBastionHost'),'true')]",
+            "type": "Microsoft.Network/bastionHosts",
+            "apiVersion": "2018-10-01",
+            "name": "[variables('bastion-name')]",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/publicIpAddresses', variables('bastion-pip-name'))]"
+            ],
+            "properties": {
+                "ipConfigurations": [
+                    {
+                        "name": "IpConf",
+                        "properties": {
+                            "subnet": {
+                                "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-bastion-name'))]"
+                            },
+                            "publicIPAddress": {
+                                "id": "[resourceId('Microsoft.Network/publicIpAddresses', variables('bastion-pip-name'))]"
+                            }
+                        }
+                    }
+                ]
+            },
+            "tags": {}
         }
     ]
 }
