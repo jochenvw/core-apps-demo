@@ -13,11 +13,19 @@ stages:
     displayName: 'Package up scripts'
     steps:
     - task: CopyFiles@2
+      displayName: "Copy ARM templates"
       inputs:
         SourceFolder: '/$(Build.SourcesDirectory)/infra'
         Contents: '*.json'
         TargetFolder: '/$(Build.ArtifactStagingDirectory)/infra'
+    - task: CopyFiles@2
+      displayName: "Copy documentation files"
+      inputs:
+        SourceFolder: '/$(Build.SourcesDirectory)/docs'
+        Contents: '*.json'
+        TargetFolder: '/$(Build.ArtifactStagingDirectory)/docs'
     - task: PublishBuildArtifacts@1
+      displayName: "Publish package to Azure DevOps artifacts repo"
       inputs:
         PathtoPublish: '$(Build.ArtifactStagingDirectory)'
         ArtifactName: 'drop'
@@ -46,7 +54,15 @@ stages:
         csmFile: '$(System.ArtifactsDirectory)/drop/infra/azure-resources.json'
         csmParametersFile: '$(System.ArtifactsDirectory)/drop/infra/resource-parameters.dev.json'
         deploymentMode: 'Complete'
-
+        overrideParameters: ''
+        deploymentOutputs: 'arm-outputs'
+    - task: Bash@3
+      inputs:
+        targetType: 'inline'
+        script: |
+          # Write your commands here
+          sed -i "s/##OUTPUT_VARIABLES##/$(arm-outputs)/g" $(System.ArtifactsDirectory)/drop/docs/build-summary.md
+          ##vso[task.uploadsummary]$(System.ArtifactsDirectory)/drop/docs/build-summary.md
 - stage: 'TEST'
   jobs:
   - job:
