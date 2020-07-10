@@ -4,28 +4,49 @@
     "parameters": {
         "resourcenameprefix": {
             "type": "string",
-            "defaultValue": "coreapp-test"
+            "defaultValue": "coreapp-test",
+            "metadata": {
+                "description": "Prefix put in front of all resource names, wherever possible. E.g. coreapp-test"
+            }
         },
         "resourcenamepostfix": {
             "type": "string",
-            "defaultValue": ""
+            "defaultValue": "",
+            "metadata": {
+                "description": "Prefix put in front of all resource names, wherever possible. Left empty for now."
+            }
+        },
+        "include-application-gateway": {
+            "type": "bool",
+            "defaultValue": false,
+            "metadata": {
+                "description": "Flag to also deploy an application gateway in the VNET in order to make the Web Apps available from outside."
+            }
         }
     },
     "variables": {
+        "#": "== Resources ==",
         "keyvault-name": "[concat(parameters('resourcenameprefix'), '-secret', parameters('resourcenamepostfix'))]",
-        "default-nsg-name": "[concat(parameters('resourcenameprefix'), '-nsg', parameters('resourcenamepostfix'))]",
-        "private-dns-zone-name": "privatelink.azurewebsites.net",
         "log-workspace-name": "[concat(parameters('resourcenameprefix'), '-logspace', parameters('resourcenamepostfix'))]",
         "servicebus-name": "[concat(parameters('resourcenameprefix'), '-messages', parameters('resourcenamepostfix'))]",
         "app-service-plan-name": "[concat(parameters('resourcenameprefix'), '-serviceplan', parameters('resourcenamepostfix'))]",
-        "vnet-name": "[concat(parameters('resourcenameprefix'), '-network', parameters('resourcenamepostfix'))]",
-        "subnet-web-name": "[concat(parameters('resourcenameprefix'), '-web-tier-subnet', parameters('resourcenamepostfix'))]",
-        "subnet-services-name": "[concat(parameters('resourcenameprefix'), '-services-tier-subnet', parameters('resourcenamepostfix'))]",
-        "app-name": "[concat(parameters('resourcenameprefix'), '-app', parameters('resourcenamepostfix'))]",
-        "privateendpoint-servicebus": "[concat(parameters('resourcenameprefix'), '-privateendpoint-servicebus', parameters('resourcenamepostfix'))]",
-        "privateendpoint-keyvault": "[concat(parameters('resourcenameprefix'), '-privateendpoint-keyvault', parameters('resourcenamepostfix'))]",
-        "privateendpoint-webapp": "[concat(parameters('resourcenameprefix'), '-privateendpoint-webapp', parameters('resourcenamepostfix'))]",
+        "webapp-name": "[concat(parameters('resourcenameprefix'), '-app', parameters('resourcenamepostfix'))]",
         "appinsights-name": "[concat(parameters('resourcenameprefix'), '-appinsights', parameters('resourcenamepostfix'))]",
+
+        "##": "== Network resources ==",
+        "vnet-name": "[concat(parameters('resourcenameprefix'), '-network', parameters('resourcenamepostfix'))]",
+        "subnet-appgw-name": "[concat(parameters('resourcenameprefix'), '-gateway-subnet', parameters('resourcenamepostfix'))]",
+        "subnet-bastion-name": "[concat(parameters('resourcenameprefix'), '-bastion-subnet', parameters('resourcenamepostfix'))]",
+        "subnet-app1-name": "[concat(parameters('resourcenameprefix'), '-public-app-subnet', parameters('resourcenamepostfix'))]",
+        "subnet-app2-name": "[concat(parameters('resourcenameprefix'), '-private-app-subnet', parameters('resourcenamepostfix'))]",
+        "subnet-services-name": "[concat(parameters('resourcenameprefix'), '-services-subnet', parameters('resourcenamepostfix'))]",
+        "default-nsg-name": "[concat(parameters('resourcenameprefix'), '-nsg', parameters('resourcenamepostfix'))]",
+        "privateendpoint-servicebus-name": "[concat(parameters('resourcenameprefix'), '-privateendpoint-servicebus', parameters('resourcenamepostfix'))]",
+        "privateendpoint-keyvault-name": "[concat(parameters('resourcenameprefix'), '-privateendpoint-keyvault', parameters('resourcenamepostfix'))]",
+        "privateendpoint-webapp-name": "[concat(parameters('resourcenameprefix'), '-privateendpoint-webapp', parameters('resourcenamepostfix'))]",
+
+        "###": "== DNS/Private Link resources ==",
+        "private-dns-zone-name": "privatelink.azurewebsites.net",
         "keyvault-dns-name": "keyvault",
         "servicebus-dns-name": "servicebus"
     },
@@ -85,20 +106,7 @@
                 "publicNetworkAccessForQuery": "Enabled"
             }
         },
-        {
-            "type": "Microsoft.ServiceBus/namespaces",
-            "apiVersion": "2018-01-01-preview",
-            "name": "[variables('servicebus-name')]",
-            "location": "[resourceGroup().location]",
-            "sku": {
-                "name": "Premium",
-                "tier": "Premium",
-                "capacity": 1
-            },
-            "properties": {
-                "zoneRedundant": true
-            }
-        },
+
         {
             "type": "Microsoft.Web/serverfarms",
             "apiVersion": "2018-02-01",
@@ -134,7 +142,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('privateendpoint-servicebus')).customDnsConfigs[0].ipAddresses[0]]"
+                        "ipv4Address": "[reference(variables('privateendpoint-servicebus-name')).customDnsConfigs[0].ipAddresses[0]]"
                     }
                 ]
             }
@@ -150,7 +158,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('privateendpoint-keyvault')).customDnsConfigs[0].ipAddresses[0]]"
+                        "ipv4Address": "[reference(variables('privateendpoint-keyvault-name')).customDnsConfigs[0].ipAddresses[0]]"
                     }
                 ]
             }
@@ -158,14 +166,14 @@
         {
             "type": "Microsoft.Network/privateDnsZones/CNAME",
             "apiVersion": "2018-09-01",
-            "name": "[concat(variables('private-dns-zone-name'), '/', variables('app-name'))]",
+            "name": "[concat(variables('private-dns-zone-name'), '/', variables('webapp-name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
             ],
             "properties": {
                 "ttl": 10,
                 "cnameRecord": {
-                    "cname": "[concat(variables('app-name'), '.azurewebsites.net')]"
+                    "cname": "[concat(variables('webapp-name'), '.azurewebsites.net')]"
                 }
 
             }
@@ -173,7 +181,7 @@
         {
             "type": "Microsoft.Network/privateDnsZones/A",
             "apiVersion": "2018-09-01",
-            "name": "[concat(variables('private-dns-zone-name'), '/', variables('app-name'))]",
+            "name": "[concat(variables('private-dns-zone-name'), '/', variables('webapp-name'))]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
             ],
@@ -181,7 +189,7 @@
                 "ttl": 10,
                 "aRecords": [
                     {
-                        "ipv4Address": "[reference(variables('privateendpoint-webapp')).customDnsConfigs[0].ipAddresses[0]]"
+                        "ipv4Address": "[reference(variables('privateendpoint-webapp-name')).customDnsConfigs[0].ipAddresses[0]]"
                     }
                 ]
             }
@@ -197,14 +205,14 @@
             "properties": {
                 "addressSpace": {
                     "addressPrefixes": [
-                        "10.3.0.0/16"
+                        "10.0.0.0/16"
                     ]
                 },
                 "subnets": [
                     {
-                        "name": "[variables('subnet-services-name')]",
+                        "name": "[variables('subnet-appgw-name')]",
                         "properties": {
-                            "addressPrefix": "10.3.1.0/27",
+                            "addressPrefix": "10.0.1.0/24",
                             "networkSecurityGroup": {
                                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
                             },
@@ -215,9 +223,22 @@
                         }
                     },
                     {
-                        "name": "[variables('subnet-web-name')]",
+                        "name": "[variables('subnet-bastion-name')]",
                         "properties": {
-                            "addressPrefix": "10.3.0.0/26",
+                            "addressPrefix": "10.0.2.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet-app1-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.10.0/24",
                             "networkSecurityGroup": {
                                 "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
                             },
@@ -232,13 +253,63 @@
                             "privateEndpointNetworkPolicies": "Enabled",
                             "privateLinkServiceNetworkPolicies": "Enabled"
                         }
+                    },
+                    {
+                        "name": "[variables('subnet-app2-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.11.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "delegations": [
+                                {
+                                    "name": "delegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.Web/serverfarms"
+                                    }
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Enabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
+                    },
+                    {
+                        "name": "[variables('subnet-services-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.20.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
                     }
+
                 ],
                 "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
                 "enableVmProtection": false
             }
         },
+
+
+        {
+            "type": "Microsoft.ServiceBus/namespaces",
+            "apiVersion": "2018-01-01-preview",
+            "name": "[variables('servicebus-name')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Premium",
+                "tier": "Premium",
+                "capacity": 1
+            },
+            "properties": {
+                "zoneRedundant": true
+            }
+        },
+
         {
             "type": "Microsoft.ServiceBus/namespaces/networkRuleSets",
             "apiVersion": "2018-01-01-preview",
@@ -253,6 +324,8 @@
                 "ipRules": []
             }
         },
+
+
         {
             "type": "Microsoft.ServiceBus/namespaces/queues",
             "apiVersion": "2017-04-01",
@@ -301,10 +374,12 @@
                 "enableExpress": false
             }
         },
+
+
         {
             "type": "Microsoft.Web/sites",
             "apiVersion": "2018-11-01",
-            "name": "[variables('app-name')]",
+            "name": "[variables('webapp-name')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Web/serverfarms', variables('app-service-plan-name'))]"
@@ -323,10 +398,10 @@
                     "type": "networkConfig",
                     "apiVersion": "2019-08-01",
                     "dependsOn": [
-                        "[resourceId('Microsoft.Web/sites', variables('app-name'))]"
+                        "[resourceId('Microsoft.Web/sites', variables('webapp-name'))]"
                     ],
                     "properties": {
-                        "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-web-name'))]",
+                        "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-app1-name'))]",
                         "swiftSupported": true
                     }
                 }
@@ -335,10 +410,10 @@
         {
             "type": "Microsoft.Web/sites/config",
             "apiVersion": "2018-11-01",
-            "name": "[concat(variables('app-name'), '/web')]",
+            "name": "[concat(variables('webapp-name'), '/web')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('app-name'))]"
+                "[resourceId('Microsoft.Web/sites', variables('webapp-name'))]"
             ],
             "properties": {
                 "numberOfWorkers": 1,
@@ -377,7 +452,7 @@
                     "rampUpRules": []
                 },
                 "autoHealEnabled": false,
-                "vnetName": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name')), '_', variables('subnet-web-name'))]",
+                "vnetName": "[concat(resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name')), '_', variables('subnet-app1-name'))]",
                 "localMySqlEnabled": false,
                 "managedServiceIdentityId": 12777,
                 "ipSecurityRestrictions": [
@@ -424,7 +499,7 @@
         {
             "type": "Microsoft.Network/privateEndpoints",
             "apiVersion": "2020-04-01",
-            "name": "[variables('privateendpoint-servicebus')]",
+            "name": "[variables('privateendpoint-servicebus-name')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]",
@@ -433,7 +508,7 @@
             "properties": {
                 "privateLinkServiceConnections": [
                     {
-                        "name": "[concat(variables('privateendpoint-servicebus'), 'servicebus_endpoint')]",
+                        "name": "[concat(variables('privateendpoint-servicebus-name'), 'servicebus_endpoint')]",
                         "properties": {
                             "privateLinkServiceId": "[resourceId('Microsoft.ServiceBus/namespaces', variables('servicebus-name'))]",
                             "groupIds": [
@@ -452,7 +527,7 @@
         {
             "type": "Microsoft.Network/privateEndpoints",
             "apiVersion": "2020-04-01",
-            "name": "[variables('privateendpoint-keyvault')]",
+            "name": "[variables('privateendpoint-keyvault-name')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.KeyVault/vaults', variables('keyvault-name'))]",
@@ -461,7 +536,7 @@
             "properties": {
                 "privateLinkServiceConnections": [
                     {
-                        "name": "[concat(variables('privateendpoint-keyvault'), 'vault_endpoint')]",
+                        "name": "[concat(variables('privateendpoint-keyvault-name'), 'vault_endpoint')]",
                         "properties": {
                             "privateLinkServiceId": "[resourceId('Microsoft.KeyVault/vaults', variables('keyvault-name'))]",
                             "groupIds": [
@@ -480,18 +555,18 @@
         {
             "type": "Microsoft.Network/privateEndpoints",
             "apiVersion": "2020-04-01",
-            "name": "[variables('privateendpoint-webapp')]",
+            "name": "[variables('privateendpoint-webapp-name')]",
             "location": "westeurope",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('app-name'))]",
+                "[resourceId('Microsoft.Web/sites', variables('webapp-name'))]",
                 "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
             ],
             "properties": {
                 "privateLinkServiceConnections": [
                     {
-                        "name": "[concat(variables('privateendpoint-webapp'), 'webapp_endpoint')]",
+                        "name": "[concat(variables('privateendpoint-webapp-name'), 'webapp_endpoint')]",
                         "properties": {
-                            "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', variables('app-name'))]",
+                            "privateLinkServiceId": "[resourceId('Microsoft.Web/sites', variables('webapp-name'))]",
                             "groupIds": [
                                 "sites"
                             ]
@@ -522,9 +597,9 @@
         {
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
             "apiVersion": "2020-04-01",
-            "name": "[concat(variables('privateendpoint-servicebus'), '/default')]",
+            "name": "[concat(variables('privateendpoint-servicebus-name'), '/default')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateendpoint-servicebus'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateendpoint-servicebus-name'))]",
                 "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
             ],
             "properties": {
@@ -541,9 +616,9 @@
         {
             "type": "Microsoft.Network/privateEndpoints/privateDnsZoneGroups",
             "apiVersion": "2020-04-01",
-            "name": "[concat(variables('privateendpoint-keyvault'), '/default')]",
+            "name": "[concat(variables('privateendpoint-keyvault-name'), '/default')]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateendpoint-keyvault'))]",
+                "[resourceId('Microsoft.Network/privateEndpoints', variables('privateendpoint-keyvault-name'))]",
                 "[resourceId('Microsoft.Network/privateDnsZones', variables('private-dns-zone-name'))]"
             ],
             "properties": {
@@ -564,15 +639,15 @@
             "location": "[resourceGroup().location]",
             "kind": "web",
             "dependsOn": [
-                "[resourceId('Microsoft.Web/sites', variables('app-name'))]"
+                "[resourceId('Microsoft.Web/sites', variables('webapp-name'))]"
             ],
             "properties": {
-                "applicationId": "[variables('app-name')]",
+                "applicationId": "[variables('webapp-name')]",
                 "application_Type": "web"
             }
         },
         {
-            "name": "[concat(variables('app-name'), '/appsettings')]",
+            "name": "[concat(variables('webapp-name'), '/appsettings')]",
             "type": "Microsoft.Web/sites/config",
             "apiVersion": "2019-08-01",
             "properties": {
@@ -590,7 +665,7 @@
             "properties": {
                 "accessPolicies": [
                     {
-                        "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('app-name')), '2019-08-01', 'Full').identity.principalId]",
+                        "objectId": "[reference(resourceId('Microsoft.Web/sites', variables('webapp-name')), '2019-08-01', 'Full').identity.principalId]",
                         "tenantId": "[subscription().tenantId]",
                         "permissions": {
                             "keys": [
@@ -616,7 +691,7 @@
             ],
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId , '/providers/Microsoft.Authorization/roleDefinitions/4f6d3b9b-027b-4f4c-9142-0e5a2a2247e0')]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('app-name')), '2019-08-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('webapp-name')), '2019-08-01', 'Full').identity.principalId]"
             }
         },
         {
@@ -628,7 +703,7 @@
             ],
             "properties": {
                 "roleDefinitionId": "[concat('/subscriptions/', subscription().subscriptionId , '/providers/Microsoft.Authorization/roleDefinitions/69a216fc-b8fb-44d8-bc22-1f3c2cd27a39')]",
-                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('app-name')), '2019-08-01', 'Full').identity.principalId]"
+                "principalId": "[reference(resourceId('Microsoft.Web/sites', variables('webapp-name')), '2019-08-01', 'Full').identity.principalId]"
             }
         }
 
