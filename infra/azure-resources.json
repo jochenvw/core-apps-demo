@@ -294,7 +294,7 @@
             "name": "[variables('vnet-name')]",
             "location": "[resourceGroup().location]",
             "dependsOn": [
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]",
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('bastion-nsg-name'))]"
             ],
             "properties": {
