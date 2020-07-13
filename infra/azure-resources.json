@@ -13,7 +13,7 @@
             "type": "string",
             "defaultValue": "",
             "metadata": {
-                "description": "Prefix put in front of all resource names, wherever possible. Left empty for now."
+                "description": "Postfix put after of all resource names, wherever possible. Left empty for now."
             }
         },
         "deployApplicationGateway": {
