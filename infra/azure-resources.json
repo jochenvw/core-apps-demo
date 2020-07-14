@@ -70,6 +70,9 @@
         "privateendpoint-keyvault-name": "[concat(parameters('resourcenameprefix'), '-privateendpoint-keyvault', parameters('resourcenamepostfix'))]",
         "privateendpoint-webapp-name": "[concat(parameters('resourcenameprefix'), '-privateendpoint-webapp', parameters('resourcenamepostfix'))]",
 
+        "nat-gateway-name": "[concat(parameters('resourcenameprefix'), '-nat', parameters('resourcenamepostfix'))]",
+        "nat-pip-name": "[concat(parameters('resourcenameprefix'), '-nat-pip', parameters('resourcenamepostfix'))]",
+
         "###": "== DNS/Private Link resources ==",
         "private-dns-zone-name": "privatelink.azurewebsites.net",
         "keyvault-dns-name": "keyvault",
@@ -371,7 +374,8 @@
             "location": "[resourceGroup().location]",
             "dependsOn": [
                 "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]",
-                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('bastion-nsg-name'))]"
+                "[resourceId('Microsoft.Network/networkSecurityGroups', variables('bastion-nsg-name'))]",
+                "[resourceId('Microsoft.Network/natGateways/', variables('nat-gateway-name'))]"
             ],
             "properties": {
                 "addressSpace": {
@@ -390,7 +394,10 @@
                             "serviceEndpoints": [],
                             "delegations": [],
                             "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
+                            "privateLinkServiceNetworkPolicies": "Enabled",
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways/', variables('nat-gateway-name'))]"
+                            }
                         }
                     },
                     {
@@ -403,7 +410,10 @@
                             "serviceEndpoints": [],
                             "delegations": [],
                             "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
+                            "privateLinkServiceNetworkPolicies": "Enabled",
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways/', variables('nat-gateway-name'))]"
+                            }
                         }
                     },
                     {
@@ -422,7 +432,10 @@
                                 }
                             ],
                             "privateEndpointNetworkPolicies": "Enabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
+                            "privateLinkServiceNetworkPolicies": "Enabled",
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways/', variables('nat-gateway-name'))]"
+                            }
                         }
                     },
                     {
@@ -441,7 +454,10 @@
                                 }
                             ],
                             "privateEndpointNetworkPolicies": "Enabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
+                            "privateLinkServiceNetworkPolicies": "Enabled",
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways/', variables('nat-gateway-name'))]"
+                            }
                         }
                     },
                     {
@@ -454,7 +470,10 @@
                             "serviceEndpoints": [],
                             "delegations": [],
                             "privateEndpointNetworkPolicies": "Disabled",
-                            "privateLinkServiceNetworkPolicies": "Enabled"
+                            "privateLinkServiceNetworkPolicies": "Enabled",
+                            "natGateway": {
+                                "id": "[resourceId('Microsoft.Network/natGateways/', variables('nat-gateway-name'))]"
+                            }
                         }
                     }
 
@@ -971,6 +990,7 @@
             },
             "resources": [
                 {
+                    "condition": "[equals(parameters('deployBastionHost'),bool('true'))]",
                     "type": "providers/diagnosticSettings",
                     "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
                     "apiVersion": "2017-05-01-preview",
@@ -1027,6 +1047,7 @@
             },
             "resources": [
                 {
+                    "condition": "[equals(parameters('deployBastionHost'),bool('true'))]",
                     "type": "providers/diagnosticSettings",
                     "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
                     "apiVersion": "2017-05-01-preview",
@@ -1045,6 +1066,71 @@
                     "dependsOn": [
                         "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
                         "[concat('Microsoft.Network/bastionHosts/', variables('bastion-name'))]"
+                    ]
+                }
+            ]
+        },
+        {
+            "apiVersion": "2019-09-01",
+            "type": "Microsoft.Network/natGateways",
+            "name": "[variables('nat-gateway-name')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "zones": [],
+            "properties": {
+                "publicIPAddresses": [
+                    {
+                        "id": "[resourceId('Microsoft.Network/publicIpAddresses/', variables('nat-pip-name'))]"
+                    }
+                ],
+                "publicIPPrefixes": [],
+                "idleTimeoutInMinutes": 4
+            },
+            "dependsOn": [
+                "[concat('Microsoft.Network/publicIpAddresses/', variables('nat-pip-name'))]"
+            ]
+        },
+        {
+            "apiVersion": "2019-02-01",
+            "type": "Microsoft.Network/publicIpAddresses",
+            "name": "[variables('nat-pip-name')]",
+            "location": "[resourceGroup().location]",
+            "sku": {
+                "name": "Standard"
+            },
+            "properties": {
+                "publicIPAllocationMethod": "Static"
+            },
+            "resources": [
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "DDoSProtectionNotifications",
+                                "enabled": true
+                            },
+                            {
+                                "category": "DDoSMitigationFlowLogs",
+                                "enabled": true
+                            },
+                            {
+                                "category": "DDoSMitigationReports",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.Network/publicIpAddresses/', variables('nat-pip-name'))]"
                     ]
                 }
             ]
