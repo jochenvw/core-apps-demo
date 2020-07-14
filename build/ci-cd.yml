@@ -10,7 +10,7 @@ stages:
 - stage: 'BUILD'
   jobs:
   - job:
-    displayName: 'Build API app'
+    displayName: 'Build apps & package scripts'
     steps:
     - task: UseDotNet@2
       displayName: 'Install dotnet core 3.1 tooling'
@@ -30,10 +30,6 @@ stages:
         publishWebProjects: false
         projects: '/$(Build.SourcesDirectory)/src/api/api.csproj'
         arguments: '--output /$(Build.ArtifactStagingDirectory)/apps/api'
-
-  - job:
-    displayName: 'Package up scripts'
-    steps:
     - task: CopyFiles@2
       displayName: "Copy ARM templates"
       inputs:
