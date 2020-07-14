@@ -72,9 +72,16 @@ stages:
         templateLocation: 'Linked artifact'
         csmFile: '$(System.ArtifactsDirectory)/drop/infra/azure-resources.json'
         csmParametersFile: '$(System.ArtifactsDirectory)/drop/infra/resource-parameters.dev.json'
-        deploymentMode: 'Complete'
+        deploymentMode: 'Increment'
         overrideParameters: '-enablePrivateLinkOnWebApp false'
         deploymentOutputs: 'arm-outputs'
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: '$(serviceconnection)'
+        appType: 'webApp'
+        WebAppName: 'coreapp-dev-app'
+        packageForLinux: '$(System.ArtifactsDirectory)/drop/apps/api/api.zip'
     - task: AzureResourceManagerTemplateDeployment@3
       displayName: 'Deploy ARM template - WebApps public endpoints locked down'
       inputs:
@@ -87,16 +94,9 @@ stages:
         templateLocation: 'Linked artifact'
         csmFile: '$(System.ArtifactsDirectory)/drop/infra/azure-resources.json'
         csmParametersFile: '$(System.ArtifactsDirectory)/drop/infra/resource-parameters.dev.json'
-        deploymentMode: 'Complete'
+        deploymentMode: 'Increment'
         overrideParameters: ''
         deploymentOutputs: 'arm-outputs'
-    - task: AzureRmWebAppDeployment@4
-      inputs:
-        ConnectionType: 'AzureRM'
-        azureSubscription: '$(serviceconnection)'
-        appType: 'webApp'
-        WebAppName: 'coreapp-dev-app'
-        packageForLinux: '$(System.ArtifactsDirectory)/drop/apps/api/api.zip'
     - task: Bash@3
       inputs:
         targetType: 'inline'
