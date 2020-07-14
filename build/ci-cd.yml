@@ -10,6 +10,28 @@ stages:
 - stage: 'BUILD'
   jobs:
   - job:
+    displayName: 'Build API app'
+    steps:
+    - task: UseDotNet@2
+      displayName: 'Install dotnet core 3.1 tooling'
+      inputs:
+        packageType: 'sdk'
+        version: '3.1'
+    - task: DotNetCoreCLI@2
+      displayName: 'Restore project dependencies'
+      inputs:
+        command: 'restore'
+        projects: '/$(Build.SourcesDirectory)/src/api/api.csproj'
+        includeNuGetOrg: true
+    - task: DotNetCoreCLI@2
+      displayName: 'Build & publish API app'
+      inputs:
+        command: 'publish'
+        publishWebProjects: false
+        projects: '/$(Build.SourcesDirectory)/src/api/api.csproj'
+        arguments: '--output /$(Build.ArtifactStagingDirectory)/apps/api'
+
+  - job:
     displayName: 'Package up scripts'
     steps:
     - task: CopyFiles@2
@@ -72,6 +94,13 @@ stages:
         deploymentMode: 'Complete'
         overrideParameters: ''
         deploymentOutputs: 'arm-outputs'
+    - task: AzureRmWebAppDeployment@4
+      inputs:
+        ConnectionType: 'AzureRM'
+        azureSubscription: '$(serviceconnection)'
+        appType: 'webApp'
+        WebAppName: 'coreapp-dev-app'
+        packageForLinux: '$(System.ArtifactsDirectory)/drop/apps/api/api.zip'
     - task: Bash@3
       inputs:
         targetType: 'inline'

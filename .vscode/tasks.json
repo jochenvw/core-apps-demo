@@ -15,7 +15,7 @@
         },
         {
             "group": "build",
-            "label": "deploy ARM template to DEV",
+            "label": "Deploy ARM template to DEV",
             "type": "shell",
             "command": "cmd < deploy-dev.azcli",
             "options": {
@@ -25,11 +25,41 @@
         },
         {
             "group": "build",
-            "label": "deploy ARM template to TEST",
+            "label": "Deploy ARM template to TEST",
             "type": "shell",
             "command": "cmd < deploy-test.azcli",
             "options": {
                 "cwd": "${workspaceFolder}/scripts"
+            },
+            "problemMatcher": []
+        },
+        {
+            "group": "build",
+            "label": "Build API app",
+            "type": "shell",
+            "command": "dotnet build",
+            "options": {
+                "cwd": "${workspaceFolder}/src/api"
+            },
+            "problemMatcher": []
+        },
+        {
+            "group": "build",
+            "label": "Run API app",
+            "type": "shell",
+            "command": "dotnet run",
+            "options": {
+                "cwd": "${workspaceFolder}/src/api"
+            },
+            "problemMatcher": []
+        },
+        {
+            "group": "build",
+            "label": "Publish API app",
+            "type": "shell",
+            "command": "dotnet publish",
+            "options": {
+                "cwd": "${workspaceFolder}/src/api"
             },
             "problemMatcher": []
         }
