@@ -92,7 +92,34 @@
                 "enabledForDiskEncryption": false,
                 "enabledForTemplateDeployment": true,
                 "enableSoftDelete": "[parameters('enableSoftDeleteOnKeyVaults')]"
-            }
+            },
+            "resources": [
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "AuditEvent",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "category": "AllMetrics",
+                                "enabled": true
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.KeyVault/vaults/', variables('keyvault-name'))]"
+                    ]
+                }
+            ]
         },
         {
             "type": "Microsoft.KeyVault/vaults/accessPolicies",
@@ -186,6 +213,55 @@
                         "subnetResourceId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-app1-name'))]",
                         "swiftSupported": true
                     }
+                },
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "AppServiceHTTPLogs",
+                                "enabled": true
+                            },
+                            {
+                                "category": "AppServiceConsoleLogs",
+                                "enabled": true
+                            },
+                            {
+                                "category": "AppServiceAppLogs",
+                                "enabled": true
+                            },
+                            {
+                                "category": "AppServiceFileAuditLogs",
+                                "enabled": true
+                            },
+                            {
+                                "category": "AppServiceAuditLogs",
+                                "enabled": true
+                            },
+                            {
+                                "category": "AppServiceIPSecAuditLogs",
+                                "enabled": true
+                            },
+                            {
+                                "category": "AppServicePlatformLogs",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "category": "AllMetrics",
+                                "enabled": true
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.Web/sites/', variables('webapp-name'))]"
+                    ]
                 }
             ]
         },
@@ -386,7 +462,34 @@
                 "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
                 "enableVmProtection": false
-            }
+            },
+            "resources": [
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "VMProtectionAlerts",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "category": "AllMetrics",
+                                "enabled": true
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.Network/virtualNetworks/', variables('vnet-name'))]"
+                    ]
+                }
+            ]
         },
         {
             "type": "Microsoft.Network/networkSecurityGroups",
@@ -395,7 +498,34 @@
             "location": "[resourceGroup().location]",
             "properties": {
                 "securityRules": []
-            }
+            },
+            "resources": [
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "NetworkSecurityGroupEvent",
+                                "enabled": true
+                            },
+                            {
+                                "category": "NetworkSecurityGroupRuleCounter",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.Network/networkSecurityGroups/', variables('default-nsg-name'))]"
+                    ]
+                }
+            ]
         },
         {
             "apiVersion": "2019-11-01",
@@ -476,7 +606,34 @@
                         }
                     }
                 ]
-            }
+            },
+            "resources": [
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "NetworkSecurityGroupEvent",
+                                "enabled": true
+                            },
+                            {
+                                "category": "NetworkSecurityGroupRuleCounter",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.Network/networkSecurityGroups/', variables('bastion-nsg-name'))]"
+                    ]
+                }
+            ]
         },
         {
             "type": "Microsoft.Network/privateDnsZones",
@@ -685,7 +842,34 @@
             },
             "properties": {
                 "zoneRedundant": true
-            }
+            },
+            "resources": [
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "OperationalLogs",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                            {
+                                "category": "AllMetrics",
+                                "enabled": true
+                            }
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.ServiceBus/namespaces/', variables('servicebus-name'))]"
+                    ]
+                }
+            ]
         },
         {
             "type": "Microsoft.ServiceBus/namespaces/networkRuleSets",
@@ -774,7 +958,7 @@
             }
         },
         {
-            "condition": "[equals(parameters('deployBastionHost'),'true')]",
+            "condition": "[equals(parameters('deployBastionHost'),bool('true'))]",
             "type": "Microsoft.Network/publicIpAddresses",
             "apiVersion": "2019-02-01",
             "name": "[variables('bastion-pip-name')]",
@@ -785,10 +969,40 @@
             "properties": {
                 "publicIPAllocationMethod": "Static"
             },
-            "tags": {}
+            "resources": [
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "DDoSProtectionNotifications",
+                                "enabled": true
+                            },
+                            {
+                                "category": "DDoSMitigationFlowLogs",
+                                "enabled": true
+                            },
+                            {
+                                "category": "DDoSMitigationReports",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.Network/publicIpAddresses/', variables('bastion-pip-name'))]"
+                    ]
+                }
+            ]
         },
         {
-            "condition": "[equals(parameters('deployBastionHost'),'true')]",
+            "condition": "[equals(parameters('deployBastionHost'),bool('true'))]",
             "type": "Microsoft.Network/bastionHosts",
             "apiVersion": "2018-10-01",
             "name": "[variables('bastion-name')]",
@@ -811,7 +1025,29 @@
                     }
                 ]
             },
-            "tags": {}
+            "resources": [
+                {
+                    "type": "providers/diagnosticSettings",
+                    "name": "[concat('Microsoft.Insights/', 'log-analytics-pusher')]",
+                    "apiVersion": "2017-05-01-preview",
+                    "properties": {
+                        "name": "log-analytics-pusher",
+                        "workspaceId": "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "logs": [
+                            {
+                                "category": "BastionAuditLogs",
+                                "enabled": true
+                            }
+                        ],
+                        "metrics": [
+                        ]
+                    },
+                    "dependsOn": [
+                        "[resourceId('Microsoft.OperationalInsights/workspaces', variables('log-workspace-name'))]",
+                        "[concat('Microsoft.Network/bastionHosts/', variables('bastion-name'))]"
+                    ]
+                }
+            ]
         }
     ]
 }
