@@ -26,15 +26,15 @@ stages:
       displayName: 'Restore project dependencies'
       inputs:
         command: 'restore'
-        projects: '/$(Build.SourcesDirectory)/src/api/api.csproj'
+        projects: '$(Build.SourcesDirectory)\src\api\api.csproj'
         includeNuGetOrg: true
     - task: DotNetCoreCLI@2
       displayName: 'Build & publish API app'
       inputs:
         command: 'publish'
         publishWebProjects: false
-        projects: '/$(Build.SourcesDirectory)/src/api/api.csproj'
-        arguments: '--output /$(Build.ArtifactStagingDirectory)/apps/api --self-contained true -r win-x86'
+        projects: '$(Build.SourcesDirectory)\src\api\api.csproj'
+        arguments: '--output \$(Build.ArtifactStagingDirectory)\apps\api --self-contained true -r win-x86'
   - job: PACK
     dependsOn: BUILD
     steps:
