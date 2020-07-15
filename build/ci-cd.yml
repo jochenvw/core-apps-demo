@@ -3,6 +3,10 @@
 trigger:
 - master
 
+variables:
+- name: system.debug
+  value: true
+
 pool:
   vmImage: 'windows-latest'
 
