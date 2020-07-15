@@ -8,7 +8,7 @@ variables:
   value: true
 
 stages:
-- stage: 'BUILD'
+- stage: 'BUILD & PACK'
   jobs:
   - job: BUILD
     pool:
@@ -34,10 +34,6 @@ stages:
         publishWebProjects: false
         projects: '$(Build.SourcesDirectory)\src\api\api.csproj'
         arguments: '--output $(Build.ArtifactStagingDirectory)\apps\api --self-contained true -r win-x86'
-
-  - job: PACK
-    dependsOn: BUILD
-    steps:
     - task: CopyFiles@2
       displayName: "Copy ARM templates"
       inputs:
