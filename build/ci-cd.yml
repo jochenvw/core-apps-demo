@@ -16,7 +16,8 @@ stages:
       displayName: 'Install dotnet core 3.1 tooling'
       inputs:
         packageType: 'sdk'
-        version: '3.1.5'
+        version: '3.1.6'
+        includePreviewVersions: false
     - task: DotNetCoreCLI@2
       displayName: 'Restore project dependencies'
       inputs:
@@ -29,7 +30,7 @@ stages:
         command: 'publish'
         publishWebProjects: false
         projects: '/$(Build.SourcesDirectory)/src/api/api.csproj'
-        arguments: '--output /$(Build.ArtifactStagingDirectory)/apps/api'
+        arguments: '--output /$(Build.ArtifactStagingDirectory)/apps/api --self-contained true -r win-x86'
   - job: PACK
     dependsOn: BUILD
     steps:
