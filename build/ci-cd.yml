@@ -79,7 +79,7 @@ stages:
         csmFile: '$(System.ArtifactsDirectory)/drop/infra/azure-resources.json'
         csmParametersFile: '$(System.ArtifactsDirectory)/drop/infra/resource-parameters.dev.json'
         deploymentMode: 'Increment'
-        overrideParameters: '-enablePrivateLinkOnWebApp false'
+        overrideParameters: '-enablePrivateLinkOnWebApp false -azureDevOpsPAT $(azureDevOpsPAT) -azureDevOpsAccount $(azureDevOpsAccount)'
         deploymentOutputs: 'arm-outputs'
     - task: AzureRmWebAppDeployment@4
       displayName: 'Deploy webapp'
