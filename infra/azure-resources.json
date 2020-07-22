@@ -43,6 +43,25 @@
             "metadata": {
                 "description": "Flag to disable private link on the webapp. Rationale is to run this template with value FALSE first, deploy app, run again on TRUE to lock things down"
             }
+        },
+        "deployDevOpsAgent": {
+            "type": "bool",
+            "defaultValue": true,
+            "metadata": {
+                "description": "Flag to deploy DevOps agent in the resource-group"
+            }
+        },
+        "azureDevOpsPAT": {
+            "type": "string",
+            "metadata": {
+                "description": "Personal access token for the Azure DevOps project - used by the agent to identity itself"
+            }
+        },
+        "azureDevOpsAccount": {
+            "type": "string",
+            "metadata": {
+                "description": "Azure DevOps account - without the .visualstudio.com or dev.azure.com/ "
+            }
         }
     },
     "variables": {
@@ -58,6 +77,13 @@
         "vnet-name": "[concat(parameters('resourcenameprefix'), '-network', parameters('resourcenamepostfix'))]",
         "subnet-appgw-name": "[concat(parameters('resourcenameprefix'), '-gateway-subnet', parameters('resourcenamepostfix'))]",
         "subnet-bastion-name": "AzureBastionSubnet",
+        "subnet-devops-agent-name": "[concat(parameters('resourcenameprefix'), '-devops-agent-subnet', parameters('resourcenamepostfix'))]",
+
+        "devops-agent-network-profile-name": "[concat(parameters('resourcenameprefix'), '-devops-agent-profile', parameters('resourcenamepostfix'))]",
+        "devops-agent-nic-config-name": "[concat(parameters('resourcenameprefix'), '-devops-agent-nic', parameters('resourcenamepostfix'))]",
+        "devops-agent-container-name": "[concat(parameters('resourcenameprefix'), '-devops-agent-container', parameters('resourcenamepostfix'))]",
+
+
         "bastion-name": "[concat(parameters('resourcenameprefix'), '-bastion', parameters('resourcenamepostfix'))]",
         "bastion-pip-name": "[concat(parameters('resourcenameprefix'), '-bastion-pip', parameters('resourcenamepostfix'))]",
 
@@ -475,8 +501,27 @@
                                 "id": "[resourceId('Microsoft.Network/natGateways/', variables('nat-gateway-name'))]"
                             }
                         }
+                    },
+                    {
+                        "name": "[variables('subnet-devops-agent-name')]",
+                        "properties": {
+                            "addressPrefix": "10.0.50.0/24",
+                            "networkSecurityGroup": {
+                                "id": "[resourceId('Microsoft.Network/networkSecurityGroups', variables('default-nsg-name'))]"
+                            },
+                            "serviceEndpoints": [],
+                            "delegations": [
+                                {
+                                    "name": "delegation",
+                                    "properties": {
+                                        "serviceName": "Microsoft.ContainerInstance/containerGroups"
+                                    }
+                                }
+                            ],
+                            "privateEndpointNetworkPolicies": "Disabled",
+                            "privateLinkServiceNetworkPolicies": "Enabled"
+                        }
                     }
-
                 ],
                 "virtualNetworkPeerings": [],
                 "enableDdosProtection": false,
@@ -765,7 +810,7 @@
             }
         },
         {
-            "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),'true')]",
+            "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),bool('true'))]",
             "type": "Microsoft.Network/privateEndpoints",
             "apiVersion": "2020-04-01",
             "name": "[variables('privateendpoint-webapp-name')]",
@@ -795,7 +840,7 @@
             }
         },
         {
-            "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),'true')]",
+            "condition": "[equals(parameters('enablePrivateLinkOnWebApp'),bool('true'))]",
             "type": "Microsoft.Network/privateDnsZones/A",
             "apiVersion": "2018-09-01",
             "name": "[concat(variables('private-dns-zone-name'), '/', variables('webapp-name'))]",
@@ -1134,6 +1179,101 @@
                     ]
                 }
             ]
+        },
+        {
+            "condition": "[equals(parameters('deployDevOpsAgent'),bool('true'))]",
+            "location": "[resourceGroup().location]",
+            "name": "[variables('devops-agent-container-name')]",
+            "type": "Microsoft.ContainerInstance/containerGroups",
+            "apiVersion": "2018-10-01",
+            "properties": {
+                "containers": [
+                    {
+                        "name": "[variables('devops-agent-container-name')]",
+                        "properties": {
+                            "image": "mcr.microsoft.com/azure-pipelines/vsts-agent",
+                            "resources": {
+                                "requests": {
+                                    "cpu": 2,
+                                    "memoryInGB": 4
+                                }
+                            },
+                            "environmentVariables": [
+                                {
+                                    "name": "VSTS_ACCOUNT",
+                                    "value": "[parameters('azureDevOpsAccount')]"
+                                },
+                                {
+                                    "name": "VSTS_TOKEN",
+                                    "value": "[parameters('azureDevOpsPAT')]"
+                                },
+                                {
+                                    "name": "VSTS_AGENT",
+                                    "value": "[variables('devops-agent-container-name')]"
+                                },
+                                {
+                                    "name": "VSTS_POOL",
+                                    "value": "[parameters('resourcenameprefix')]"
+                                }
+                            ],
+                            "ports": [
+                                {
+                                    "port": 80,
+                                    "protocol": "TCP"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "restartPolicy": "OnFailure",
+                "osType": "Linux",
+                "ipAddress": {
+                    "type": "Private",
+                    "ports": [
+                        {
+                            "port": 80,
+                            "protocol": "TCP"
+                        }
+                    ]
+                },
+                "networkProfile": {
+                    "Id": "[resourceId('Microsoft.Network/networkProfiles', variables('devops-agent-network-profile-name'))]"
+                }
+            },
+            "tags": {},
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/networkProfiles', variables('devops-agent-network-profile-name'))]"
+            ]
+        },
+        {
+            "condition": "[equals(parameters('deployDevOpsAgent'),bool('true'))]",
+            "name": "[variables('devops-agent-network-profile-name')]",
+            "type": "Microsoft.Network/networkProfiles",
+            "apiVersion": "2019-11-01",
+            "location": "[resourceGroup().location]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', variables('vnet-name'))]"
+            ],
+            "properties": {
+                "containerNetworkInterfaceConfigurations": [
+                    {
+                        "name": "[variables('devops-agent-nic-config-name')]",
+                        "properties": {
+                            "ipConfigurations": [
+                                {
+                                    "name": "[variables('devops-agent-nic-config-name')]",
+                                    "properties": {
+                                        "subnet": {
+                                            "id": "[resourceId('Microsoft.Network/virtualNetworks/subnets', variables('vnet-name'), variables('subnet-devops-agent-name'))]"
+                                        }
+                                    }
+                                }
+                            ]
+                        }
+                    }
+                ]
+            }
         }
+
     ]
 }
